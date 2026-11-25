@@ -4,7 +4,7 @@
 (() => {
   'use strict';
 
-  const PROXY_BASE = '';
+  const PROXY_BASE = 'https://ccloud-api-proxy.thealirezahabibi-b14.workers.dev';
   const API_HOSTS = new Set([
     'https://server-hi-speed-iran.info',
     'https://hostinnegar.com',
