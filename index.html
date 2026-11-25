@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101114">
+  <meta name="description" content="Discover movies and series with CCloud.">
+  <title>CCloud — Movies & series</title>
+  <link rel="preconnect" href="https://server-hi-speed-iran.info">
+  <link rel="preconnect" href="https://image.tmdb.org">
+  <link rel="stylesheet" href="web/styles.css">
+  <script src="web/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#home" aria-label="CCloud home"><span class="brand-mark">C</span><span>ccloud</span></a>
+    <nav class="main-nav" aria-label="Main navigation">
+      <button class="nav-link active" data-view="home">Home</button>
+      <button class="nav-link" data-view="movies">Movies</button>
+      <button class="nav-link" data-view="series">Series</button>
+      <button class="nav-link" data-view="favorites">My list</button>
+    </nav>
+    <label class="search-box"><span aria-hidden="true">⌕</span><input id="search-input" type="search" placeholder="Titles, genres…" autocomplete="off" aria-label="Search movies and series"><kbd>/</kbd></label>
+    <button class="icon-button mobile-search" id="mobile-search" aria-label="Focus search">⌕</button>
+  </header>
+  <main>
+    <section class="hero" id="hero">
+      <div class="hero-backdrop"></div>
+      <div class="hero-content">
+        <p class="eyebrow"><span class="live-dot"></span> YOUR NEXT STORY STARTS HERE</p>
+        <h1>Stories worth<br><span>staying in for.</span></h1>
+        <p class="hero-copy">Find your next favorite movie or series. Browse the collection and make tonight a movie night.</p>
+        <div class="hero-actions"><button class="button button-primary" id="explore-button"><span>▦</span> Explore titles</button><button class="button button-quiet" id="hero-info">How it works <span>↗</span></button></div>
+        <div class="hero-meta"><span class="meta-line"></span><span>CURATED FOR YOUR EVENING</span></div>
+      </div>
+      <div class="hero-index"><span>01</span><span class="index-line"></span><span>04</span></div>
+    </section>
+    <section class="catalog-section" id="catalog">
+      <div class="section-heading"><div><p class="eyebrow section-eyebrow" id="section-kicker">A WORLD OF STORIES</p><h2 id="section-title">Popular right now</h2></div><div class="catalog-controls"><select id="sort-select" aria-label="Sort titles"><option value="created">Recently added</option><option value="year">Release year</option><option value="imdb">Top rated</option></select><button class="filter-chip active" data-kind="all">All titles</button><button class="filter-chip" data-kind="movie">Movies</button><button class="filter-chip" data-kind="serie">Series</button></div></div>
+      <div id="genre-list" class="genre-list" aria-label="Filter by genre"></div>
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+      <div id="title-grid" class="title-grid"></div>
+      <button class="load-more" id="load-more">Load more <span>↓</span></button>
+    </section>
+    <section class="feature-strip"><div class="feature-icon">✦</div><div><p class="eyebrow">A BETTER WAY TO BROWSE</p><h2>Make room for a great story.</h2><p>Explore a growing collection, keep your favorites close, and enjoy a clean viewing experience on any screen.</p></div><button id="feature-explore" class="button button-outline">Browse collection <span>→</span></button></section>
+  </main>
+  <footer><a class="brand footer-brand" href="#home"><span class="brand-mark">C</span><span>ccloud</span></a><span>Find a story for tonight.</span><a href="https://github.com/AZER1LA/CCloud-Web" target="_blank" rel="noreferrer">About this project ↗</a></footer>
+  <dialog id="detail-dialog" class="detail-dialog"><button class="dialog-close" data-close aria-label="Close details">×</button><div id="detail-content"></div></dialog>
+  <dialog id="player-dialog" class="player-dialog"><button class="dialog-close" data-close aria-label="Close player">×</button><div class="player-inner"><div class="video-wrap"><video id="video-player" controls playsinline></video><div id="player-placeholder" class="player-placeholder"><span>▶</span><p>Select a source to start watching</p></div></div><div class="player-info"><div><p class="eyebrow">NOW PLAYING</p><h2 id="player-title">Choose a title</h2></div><div id="source-list" class="source-list"></div></div></div></dialog>
+  <dialog id="notice-dialog" class="notice-dialog"><button class="dialog-close" data-close aria-label="Close">×</button><p class="eyebrow">A NOTE FROM CCLOUD</p><h2>One more thing.</h2><p>This web version is a browser-based companion to the Android app. Playback depends on your browser supporting the selected source. Only watch content you have permission to access.</p><button class="button button-primary" data-close>Got it</button></dialog>
+</body>
+</html>
