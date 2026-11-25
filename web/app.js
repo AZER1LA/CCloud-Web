@@ -1,9 +1,11 @@
 (() => {
   'use strict';
 
-  // This public client uses the same catalog API as the Android app.
-  // API_HOST is configurable if an authorized proxy is later deployed.
-  const API_BASE = 'https://server-hi-speed-iran.info/api';
+  const API_HOSTS = [
+    'https://server-hi-speed-iran.info',
+    'https://hostinnegar.com',
+    'https://windowsdiba.info'
+  ];
   const API_KEY = '4F5A9C3D9A86FA54EACEDDD635185';
   const PAGE_SIZE = 20;
   const state = { view: 'home', kind: 'all', genre: 0, sort: 'created', page: 0, items: [], genres: [], query: '', loading: false, favorites: new Set(readFavorites()) };
@@ -20,19 +22,34 @@
   function imageUrl(item) { return item.image || item.cover || ''; }
   function apiError(error) {
     console.error('CCloud catalog request failed:', error);
-    status.innerHTML = `<div class="empty-state"><strong>We couldn’t load the catalog.</strong><span>Chrome could not complete the API request. This is usually a CORS or network issue.</span><br><button class="load-more" id="retry-button">Try again</button></div>`;
+    status.innerHTML = `<div class="empty-state"><strong>We couldn’t load the catalog.</strong><span>Chrome could not complete the API request. All available API hosts were tried, but browser/CORS or network access may be blocking them.</span><br><button class="load-more" id="retry-button">Try again</button></div>`;
     $('#retry-button')?.addEventListener('click', () => loadCatalog(true));
   }
+
   async function request(url) {
-    try {
-      const response = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store' });
-      if (!response.ok) throw new Error(`Catalog returned ${response.status}`);
-      return response.json();
-    } catch (error) {
-      console.error('API request failed:', url, error);
-      throw error;
+    const path = url.replace(/^https?:\/\/[^/]+/, '');
+    let lastError;
+    for (const host of API_HOSTS) {
+      const candidate = host + path;
+      try {
+        const response = await fetch(candidate, {
+          headers: { Accept: 'application/json' },
+          cache: 'no-store'
+        });
+        if (!response.ok) throw new Error(`Catalog returned ${response.status}`);
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.includes('application/json')) {
+          throw new Error(`Expected JSON but received ${contentType || 'unknown content type'}`);
+        }
+        return await response.json();
+      } catch (error) {
+        lastError = error;
+        console.warn('CCloud API host failed:', candidate, error);
+      }
     }
+    throw lastError || new Error('All CCloud API hosts failed');
   }
+
   function getKind(item) { return String(item.type || '').toLowerCase().includes('serie') ? 'serie' : 'movie'; }
   function currentCollection() {
     const q = state.query.trim().toLowerCase();
@@ -86,7 +103,7 @@
     state.loading = true; status.textContent = state.items.length ? 'Loading more titles…' : 'Finding something good…'; loadMore.disabled = true;
     try {
       const sort = state.sort === 'created' ? 'created' : state.sort;
-      const url = `${API_BASE}/${state.kind === 'serie' ? 'serie' : 'movie'}/by/filtres/${state.genre}/${sort}/${state.page}/${API_KEY}/`;
+      const url = `${API_HOSTS[0]}/api/${state.kind === 'serie' ? 'serie' : 'movie'}/by/filtres/${state.genre}/${sort}/${state.page}/${API_KEY}/`;
       const pageItems = await request(url);
       if (!Array.isArray(pageItems)) throw new Error('Unexpected catalog response');
       const seen = new Set(state.items.map((item) => `${item.type}:${item.id}`));
@@ -98,7 +115,7 @@
     finally { state.loading = false; loadMore.disabled = false; }
   }
   async function loadGenres() {
-    try { const result = await request(`${API_BASE}/genre/all/${API_KEY}/`); state.genres = Array.isArray(result) ? result : []; renderGenres(); } catch (error) { console.warn('Genres unavailable:', error); }
+    try { const result = await request(`${API_HOSTS[0]}/api/genre/all/${API_KEY}/`); state.genres = Array.isArray(result) ? result : []; renderGenres(); } catch (error) { console.warn('Genres unavailable:', error); }
   }
   async function searchTitles(query) {
     const normalized = query.trim();
@@ -107,7 +124,7 @@
     if (!normalized) { state.page = 0; state.items = []; await loadCatalog(true); return; }
     state.loading = true; status.textContent = 'Searching…'; grid.innerHTML = '';
     try {
-      const result = await request(`${API_BASE}/search/${encodeURIComponent(normalized).replace(/%20/g, '%20')}/${API_KEY}/`);
+      const result = await request(`${API_HOSTS[0]}/api/search/${encodeURIComponent(normalized).replace(/%20/g, '%20')}/${API_KEY}/`);
       const posters = Array.isArray(result?.posters) ? result.posters : [];
       state.items = posters; state.page = 0; status.textContent = ''; renderCards(); loadMore.hidden = true;
     } catch (error) { apiError(error); }
@@ -129,7 +146,7 @@
   async function loadSeasons(seriesId) {
     const container = $('#season-list'); container.innerHTML = '<p class="status">Loading episodes…</p>';
     try {
-      const seasons = await request(`${API_BASE}/season/by/serie/${seriesId}/${API_KEY}/`);
+      const seasons = await request(`${API_HOSTS[0]}/api/season/by/serie/${seriesId}/${API_KEY}/`);
       container.innerHTML = '';
       if (!Array.isArray(seasons) || !seasons.length) { container.innerHTML = '<p class="status">No episodes are available.</p>'; return; }
       seasons.forEach((season, index) => {
@@ -172,7 +189,7 @@
   $('#search-input').addEventListener('input', (event) => {
     clearTimeout(window.searchTimer); window.searchTimer = setTimeout(() => event.target.value.trim() ? searchTitles(event.target.value) : state.query && searchTitles(''), 350);
   });
-  document.addEventListener('keydown', (event) => { if (event.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) { event.preventDefault(); $('#search-input').focus(); } });
+  document.addEventListener('keydown', (event) => { if (event.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) { event.preventEventDefault(); $('#search-input').focus(); } });
   $('#mobile-search').addEventListener('click', () => { $('#search-input').style.width = '200px'; $('#search-input').style.display = 'block'; $('#search-input').focus(); });
   $('#explore-button').addEventListener('click', () => $('#catalog').scrollIntoView({ behavior: 'smooth' }));
   $('#feature-explore').addEventListener('click', () => $('#catalog').scrollIntoView({ behavior: 'smooth' }));
