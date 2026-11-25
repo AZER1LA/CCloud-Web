@@ -1,8 +1,8 @@
 (() => {
   'use strict';
 
-  // This public client uses the same catalog API as the Android app. A browser deployment
-  // requires the API host to permit cross-origin requests (CORS).
+  // This public client uses the same catalog API as the Android app.
+  // API_HOST is configurable if an authorized proxy is later deployed.
   const API_BASE = 'https://server-hi-speed-iran.info/api';
   const API_KEY = '4F5A9C3D9A86FA54EACEDDD635185';
   const PAGE_SIZE = 20;
@@ -20,13 +20,18 @@
   function imageUrl(item) { return item.image || item.cover || ''; }
   function apiError(error) {
     console.error('CCloud catalog request failed:', error);
-    status.innerHTML = `<div class="empty-state"><strong>We couldn’t load the catalog.</strong>Check your connection and try again. If this keeps happening, the API may not allow requests from this website (CORS).<br><button class="load-more" id="retry-button">Try again</button></div>`;
+    status.innerHTML = `<div class="empty-state"><strong>We couldn’t load the catalog.</strong><span>Chrome could not complete the API request. This is usually a CORS or network issue.</span><br><button class="load-more" id="retry-button">Try again</button></div>`;
     $('#retry-button')?.addEventListener('click', () => loadCatalog(true));
   }
   async function request(url) {
-    const response = await fetch(url, { headers: { Accept: 'application/json' } });
-    if (!response.ok) throw new Error(`Catalog returned ${response.status}`);
-    return response.json();
+    try {
+      const response = await fetch(url, { headers: { Accept: 'application/json' }, cache: 'no-store' });
+      if (!response.ok) throw new Error(`Catalog returned ${response.status}`);
+      return response.json();
+    } catch (error) {
+      console.error('API request failed:', url, error);
+      throw error;
+    }
   }
   function getKind(item) { return String(item.type || '').toLowerCase().includes('serie') ? 'serie' : 'movie'; }
   function currentCollection() {
@@ -81,7 +86,7 @@
     state.loading = true; status.textContent = state.items.length ? 'Loading more titles…' : 'Finding something good…'; loadMore.disabled = true;
     try {
       const sort = state.sort === 'created' ? 'created' : state.sort;
-      const url = `${API_BASE}/${state.kind === 'serie' ? 'serie' : 'movie'}/by/filtres/${state.genre}/${sort}/${state.page}/${API_KEY}`;
+      const url = `${API_BASE}/${state.kind === 'serie' ? 'serie' : 'movie'}/by/filtres/${state.genre}/${sort}/${state.page}/${API_KEY}/`;
       const pageItems = await request(url);
       if (!Array.isArray(pageItems)) throw new Error('Unexpected catalog response');
       const seen = new Set(state.items.map((item) => `${item.type}:${item.id}`));
@@ -93,7 +98,7 @@
     finally { state.loading = false; loadMore.disabled = false; }
   }
   async function loadGenres() {
-    try { const result = await request(`${API_BASE}/genre/all/${API_KEY}`); state.genres = Array.isArray(result) ? result : []; renderGenres(); } catch (error) { console.warn('Genres unavailable:', error); }
+    try { const result = await request(`${API_BASE}/genre/all/${API_KEY}/`); state.genres = Array.isArray(result) ? result : []; renderGenres(); } catch (error) { console.warn('Genres unavailable:', error); }
   }
   async function searchTitles(query) {
     const normalized = query.trim();
